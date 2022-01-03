@@ -1,13 +1,6 @@
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
 
-$config = @{
-    BaseUri = "https://{base url}";
-    VersionUri = "/ims/oneroster/v1p1";
-    TokenUri = "/oauth/token";
-    ClientKey = "{Client Secret";
-    ClientSecret = "{Client Key}";
-    PageSize = "1000";
-}
+$config = ConvertFrom-Json $configuration
 
 function Get-AuthToken {
 [cmdletbinding()]
@@ -33,7 +26,7 @@ Param (
         };
         Write-Verbose "POST $($requestUri)" -Verbose;
         $response = Invoke-RestMethod -Method Post -Uri $requestUri -Body $parameters -Headers $headers -Verbose:$false
-        Write-Verbose -Verbose $response;
+
         $accessToken = $response.access_token
     
         #Add the authorization header to the request
@@ -45,6 +38,7 @@ Param (
         @($authorization);
     }
 }
+
 
 function Get-Data {
 [cmdletbinding()]
@@ -75,16 +69,17 @@ Param (
         $propertyArray = $EndpointURI.replace('/','');
         if(@("students","teachers") -contains $propertyArray) { $propertyArray = "users" }
         
-        $response = (Invoke-RestMethod -Method GET -Uri $requestUri -Body $parameters -Headers $Authorization -Verbose:$false)."$($propertyArray)"
+        $response = (Invoke-RestMethod -Method GET -Uri $requestUri -Body $parameters -Headers $Authorization)."$($propertyArray)"
         
         $results.AddRange($response);
-
-        if($response.count -lt $offset)
+        
+        $offset = $offset + $response.count;
+        if($response.count -lt $PageSize)
         {
             break;
         }
         
-        $offset = $offset + $response.count;
+        
         
      }
         return $results;
@@ -92,8 +87,17 @@ Param (
     }
 }
 
-$authorization = Get-AuthToken @config
-$orgs = Get-Data @config -EndpointUri "/orgs" -Authorization $authorization
+
+$splat = @{
+    BaseURI = $config.BaseURI
+    VersionUri = $config.VersionUri
+    TokenUri = $config.TokenUri
+    ClientKey = $config.ClientKey
+    ClientSecret = $config.ClientSecret
+    PageSize = $config.PageSize
+}
+$splat['Authorization'] = Get-AuthToken @splat
+$orgs = Get-Data @splat -EndpointUri "/orgs"
 
 foreach($org in $orgs)
 {
