@@ -1,0 +1,59 @@
+[
+  {
+    "key": "BaseURI",
+    "type": "input",
+    "defaultValue": "",
+    "templateOptions": {
+      "label": "URL",
+      "placeholder": "server.domain.com",
+      "required": true
+    }
+  },
+  {
+    "key": "ClientKey",
+    "type": "input",
+    "defaultValue": "",
+    "templateOptions": {
+      "label": "API Key",
+      "placeholder": "",
+      "required": true
+    }
+  },
+  {
+    "key": "ClientSecret",
+    "type": "input",
+    "defaultValue": "",
+    "templateOptions": {
+      "label": "API Secret",
+      "type": "password",
+      "required": false
+    }
+  },
+  {
+    "key": "TokenUri",
+    "type": "input",
+    "defaultValue": "/oauth/token",
+    "templateOptions": {
+      "label": "Token URI",
+      "required": true
+    }
+  },
+  {
+    "key": "VersionUri",
+    "type": "input",
+    "defaultValue": "/ims/oneroster/v1p1",
+    "templateOptions": {
+      "label": "Token URI",
+      "required": true
+    }
+  },
+  {
+    "key": "PageSize",
+    "type": "input",
+    "defaultValue": "1000",
+    "templateOptions": {
+      "label": "Page Size",
+      "required": true
+    }
+  }
+]
