@@ -1,6 +1,11 @@
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 Write-Information "Processing Persons"
 #region Configuration
+<#
+    1.1 Base(Version) URI:  /campus/oneroster/*********/ims/oneroster/v1p1
+    1.2 Base(Version) URI:  /campus/api/ims/oneroster/rostering/v1p2
+#>
+
 if($null -eq $configuration){
     $configuration = '' # Get JSON from HelloID
     $InformationPreference = 'continue'
@@ -99,8 +104,8 @@ function Get-Data {
                 $response = Invoke-RestMethod @splat
             }
             catch {
-                Write-Information ("  Retrying RestMethod.  Error:  $_" -f $_)
-                Start-Delay -seconds 5
+                Write-Warning ("  Retrying RestMethod.  Error:  {0}" -f $_)
+                Start-Sleep -seconds 5
                 $response = Invoke-RestMethod @splat
             }
 
@@ -182,9 +187,6 @@ $mc = Measure-Command {
     $availablePersons = [System.Collections.Generic.List[object]]::new()
     $availablePersons.AddRange($students)
     $availablePersons.AddRange($teachers)
-
-    # Other EndPoints
-    $demographics           = Get-Data @splat -EndpointUri "/demographics"
 }
 Write-Information "Data Pulled in $($mc.days):$($mc.hours):$($mc.minutes):$($mc.seconds).$($mc.milliseconds)"
 #endregion Get Data
@@ -204,7 +206,7 @@ $mc = Measure-Command {
             Write-Information ('Processing Return: ({0}/{1}) {2:n1} s...' -f $_i,$availablePersons.count,((Get-Date) - $now).TotalSeconds)
         }
     
-        $_skipfields = @("orgs","agents","grades")
+        $_skipfields = @("orgs","agents","grades","metadata")
         foreach($prop in ($user.PSObject.properties)) #.Where({$_skipfields -notcontains $_.Name })))
         {
             if($_skipfields -notcontains $prop.Name)
@@ -276,14 +278,16 @@ $mc = Measure-Command {
                 'scheduled' {$contract['Sequence'] = 2}
                 default     {$contract['Sequence'] = 3}
             }
-            
+            # Extra logic to lower priority of 'tobedeleted' records.
+            if($contract.status -ne 'active') {$contract.Sequence = 3}
+
             #Academic Sessions/Terms for Class  (Not including Terms due to excessive memory use in HelloID error)
             #$contract['terms'] = [System.Collections.Generic.List[psobject]]::new()   
             foreach($_term in $c.terms)
             {
                 $term = @{}
                 $as = $academicSessions_ht[$_term.sourcedId.ToString()][0]
-                $_skipfields = @("children")
+                $_skipfields = @("children","parent")
                 foreach($prop in ($as.PSObject.properties)) # | ? {$_skipfields -notcontains $_.Name}))
                 {
                     if($_skipfields -notcontains $prop.Name)
@@ -325,8 +329,7 @@ $mc = Measure-Command {
             $person.Contracts.Add($contract)
         }
         $return.add($person)
-    }
-    
+    }    
 }
 Write-Information "Return Processed in $($mc.days):$($mc.hours):$($mc.minutes):$($mc.seconds).$($mc.milliseconds)"
 #endregion Prepare Return Data

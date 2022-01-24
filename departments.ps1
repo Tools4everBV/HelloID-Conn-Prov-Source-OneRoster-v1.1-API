@@ -1,6 +1,11 @@
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 Write-Information "Processing Departments"
 #region Configuration
+<#
+    OneRoster 1.1 Base(Version) URI:  /campus/oneroster/*********/ims/oneroster/v1p1
+    OneRoster 1.2 Base(Version) URI:  /campus/api/ims/oneroster/rostering/v1p2
+#>
+
 if($null -eq $configuration){
     $configuration = '' # Get JSON from HelloID
     $InformationPreference = 'continue'
@@ -99,8 +104,8 @@ function Get-Data {
                 $response = Invoke-RestMethod @splat
             }
             catch {
-                Write-Information ("  Retrying RestMethod.  Error:  $_" -f $_)
-                Start-Delay -seconds 5
+                Write-Warning ("  Retrying RestMethod.  Error:  {0}" -f $_)
+                Start-Sleep -seconds 5
                 $response = Invoke-RestMethod @splat
             }
 
