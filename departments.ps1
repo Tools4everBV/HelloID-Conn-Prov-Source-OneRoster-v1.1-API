@@ -1,11 +1,6 @@
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 Write-Information "Processing Departments"
 #region Configuration
-<#
-    OneRoster 1.1 Base(Version) URI:  /campus/oneroster/*********/ims/oneroster/v1p1
-    OneRoster 1.2 Base(Version) URI:  /campus/api/ims/oneroster/rostering/v1p2
-#>
-
 if($null -eq $configuration){
     $configuration = '' # Get JSON from HelloID
     $InformationPreference = 'continue'
