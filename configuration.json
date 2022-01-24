@@ -43,7 +43,7 @@
     "type": "input",
     "defaultValue": "/ims/oneroster/v1p1",
     "templateOptions": {
-      "label": "Token URI",
+      "label": "Version URI",
       "required": true
     }
   },
