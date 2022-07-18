@@ -32,7 +32,10 @@ function Get-AuthToken {
             Accept  = "application/json"
         }
         
-        $parameters = @{grant_type="client_credentials"}
+        $parameters = @{
+                        grant_type="client_credentials"
+                        scope='https://purl.imsglobal.org/spec/or/v1p1/scope/roster.readonly https://purl.imsglobal.org/spec/or/v1p1/scope/roster-demographics.readonly https://purl.imsglobal.org/spec/or/v1p1/scope/gradebook.readonly https://purl.imsglobal.org/spec/or/v1p1/scope/resource.readonly'
+                    }
         
         Write-Information ("POST {0}" -f $requestUri)
         $splat = @{
@@ -99,9 +102,16 @@ function Get-Data {
                 $response = Invoke-RestMethod @splat
             }
             catch {
-                Write-Warning ("  Retrying RestMethod.  Error:  {0}" -f $_)
-                Start-Sleep -seconds 5
-                $response = Invoke-RestMethod @splat
+                if($_.Exception.Response.StatusCode.value__ -eq 401)
+                {
+                    Write-Error "Client is unauthorized"
+                }
+                else
+                {
+                    Write-Warning ("  Retrying RestMethod.  Error:  {0}" -f $_)
+                    Start-Sleep -seconds 5
+                    $response = Invoke-RestMethod @splat
+                }
             }
 
             $results.AddRange($response.$propertyArray)
@@ -159,7 +169,12 @@ $splat = @{
     PageSize = $config.PageSize
 }
 $mc = Measure-Command {
-    $splat['Authorization'] = Get-AuthToken @splat
+    try {
+        $splat['Authorization'] = Get-AuthToken @splat
+    } catch {
+        Write-Error "Authorization Failed - $_"
+        break
+    }
     $orgs               = Get-Data @splat -EndpointUri "/orgs" 
     $orgs_ht            = $orgs | Group-ObjectHashtable 'sourcedId'
         $orgs_empty = @{}
